@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snake</title>
+<style>
+  :root {
+    --bg: #f4f4f0;
+    --panel: #ffffff;
+    --text: #1d1d1b;
+    --muted: #6b6b66;
+    --board: #1d1f1c;
+    --grid: #262925;
+    --snake: #3fa34d;
+    --head: #7bd389;
+    --food: #e5484d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121311;
+      --panel: #1b1d1a;
+      --text: #ecece8;
+      --muted: #9a9a94;
+      --board: #0b0c0a;
+      --grid: #161815;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121311;
+    --panel: #1b1d1a;
+    --text: #ecece8;
+    --muted: #9a9a94;
+    --board: #0b0c0a;
+    --grid: #161815;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+  }
+  h1 { margin: 0 0 12px; font-size: 1.5rem; letter-spacing: 0.02em; }
+  .bar {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: space-between;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 8px;
+  }
+  .bar span { color: var(--muted); }
+  .bar strong { color: var(--text); }
+  .wrap { position: relative; width: 100%; max-width: 600px; }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--board);
+    border-radius: 8px;
+    touch-action: none;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 8px;
+    text-align: center;
+    padding: 16px;
+  }
+  .overlay[hidden] { display: none; }
+  .overlay h2 { margin: 0; font-size: 2rem; }
+  .overlay p { margin: 0; opacity: 0.85; }
+  button {
+    font: inherit;
+    padding: 8px 18px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--snake);
+    color: #fff;
+    cursor: pointer;
+  }
+  button:hover { filter: brightness(1.1); }
+  .help { color: var(--muted); font-size: 0.9rem; margin-top: 12px; text-align: center; }
+  .pad {
+    display: none;
+    grid-template-columns: repeat(3, 56px);
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .pad button { height: 56px; padding: 0; font-size: 1.3rem; background: var(--panel); color: var(--text); }
+  .pad .up { grid-column: 2; }
+  .pad .left { grid-column: 1; grid-row: 2; }
+  .pad .down { grid-column: 2; grid-row: 2; }
+  .pad .right { grid-column: 3; grid-row: 2; }
+  @media (pointer: coarse) { .pad { display: grid; } }
+</style>
+</head>
+<body>
+  <h1>Snake</h1>
+  <div class="bar">
+    <span>점수 <strong id="score">0</strong></span>
+    <span>최고 <strong id="best">0</strong></span>
+  </div>
+  <div class="wrap">
+    <canvas id="board" width="600" height="400"></canvas>
+    <div class="overlay" id="overlay">
+      <h2 id="title">Snake</h2>
+      <p id="msg">방향키나 WASD로 시작하세요</p>
+      <button id="start">시작</button>
+    </div>
+  </div>
+  <div class="pad" aria-label="방향 버튼">
+    <button class="up" data-dir="up" aria-label="위">▲</button>
+    <button class="left" data-dir="left" aria-label="왼쪽">◀</button>
+    <button class="down" data-dir="down" aria-label="아래">▼</button>
+    <button class="right" data-dir="right" aria-label="오른쪽">▶</button>
+  </div>
+  <p class="help">방향키 / WASD 이동 · 스페이스 일시정지 · R 재시작</p>
+
+<script>
+  const CELL = 20, COLS = 30, ROWS = 20, SPEED = 110;
+  const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  const KEYS = {
+    ArrowUp: "up", w: "up", W: "up",
+    ArrowDown: "down", s: "down", S: "down",
+    ArrowLeft: "left", a: "left", A: "left",
+    ArrowRight: "right", d: "right", D: "right",
+  };
+
+  const canvas = document.getElementById("board");
+  const ctx = canvas.getContext("2d");
+  const $ = (id) => document.getElementById(id);
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  let snake, dir, nextDir, food, score, state, timer;
+  let best = 0;
+  try { best = Number(localStorage.getItem("snake-best")) || 0; } catch (e) {}
+  $("best").textContent = best;
+
+  function reset() {
+    const cx = COLS >> 1, cy = ROWS >> 1;
+    snake = [[cx, cy], [cx - 1, cy], [cx - 2, cy]];
+    dir = nextDir = DIRS.right;
+    score = 0;
+    $("score").textContent = 0;
+    placeFood();
+    state = "ready";
+    showOverlay("Snake", "방향키나 WASD로 시작하세요", "시작");
+    draw();
+  }
+
+  function placeFood() {
+    const free = [];
+    for (let x = 0; x < COLS; x++)
+      for (let y = 0; y < ROWS; y++)
+        if (!snake.some(([sx, sy]) => sx === x && sy === y)) free.push([x, y]);
+    food = free.length ? free[Math.floor(Math.random() * free.length)] : null;
+  }
+
+  function start() {
+    if (state === "over") reset();
+    state = "running";
+    $("overlay").hidden = true;
+    clearInterval(timer);
+    timer = setInterval(tick, SPEED);
+  }
+
+  function togglePause() {
+    if (state === "running") {
+      state = "paused";
+      clearInterval(timer);
+      showOverlay("일시정지", "스페이스를 눌러 계속하기", "계속");
+    } else if (state === "paused") {
+      start();
+    }
+  }
+
+  function turn(name) {
+    const d = DIRS[name];
+    if (d[0] + dir[0] !== 0 || d[1] + dir[1] !== 0) nextDir = d;
+    if (state === "ready") start();
+  }
+
+  function tick() {
+    dir = nextDir;
+    const head = [snake[0][0] + dir[0], snake[0][1] + dir[1]];
+    const eating = food && head[0] === food[0] && head[1] === food[1];
+    const body = eating ? snake : snake.slice(0, -1);
+    const out = head[0] < 0 || head[0] >= COLS || head[1] < 0 || head[1] >= ROWS;
+    if (out || body.some(([x, y]) => x === head[0] && y === head[1])) return gameOver(false);
+
+    snake.unshift(head);
+    if (eating) {
+      score += 10;
+      $("score").textContent = score;
+      placeFood();
+      if (!food) return gameOver(true);
+    } else {
+      snake.pop();
+    }
+    draw();
+  }
+
+  function gameOver(won) {
+    clearInterval(timer);
+    state = "over";
+    if (score > best) {
+      best = score;
+      $("best").textContent = best;
+      try { localStorage.setItem("snake-best", best); } catch (e) {}
+    }
+    draw();
+    showOverlay(won ? "승리!" : "GAME OVER", `점수 ${score}점 · R 키로 재시작`, "다시 하기");
+  }
+
+  function showOverlay(title, msg, btn) {
+    $("title").textContent = title;
+    $("msg").textContent = msg;
+    $("start").textContent = btn;
+    $("overlay").hidden = false;
+  }
+
+  function draw() {
+    ctx.fillStyle = css("--board");
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = css("--grid");
+    for (let x = 0; x < COLS; x++)
+      for (let y = 0; y < ROWS; y++)
+        if ((x + y) % 2) ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+
+    if (food) {
+      ctx.fillStyle = css("--food");
+      ctx.beginPath();
+      ctx.arc(food[0] * CELL + CELL / 2, food[1] * CELL + CELL / 2, CELL / 2 - 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    snake.forEach(([x, y], i) => {
+      ctx.fillStyle = i === 0 ? css("--head") : css("--snake");
+      ctx.beginPath();
+      ctx.roundRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2, 5);
+      ctx.fill();
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (KEYS[e.key]) { e.preventDefault(); turn(KEYS[e.key]); }
+    else if (e.key === " ") { e.preventDefault(); state === "ready" ? start() : togglePause(); }
+    else if (e.key === "r" || e.key === "R") { clearInterval(timer); reset(); }
+  });
+  $("start").addEventListener("click", () => state === "paused" ? togglePause() : start());
+  document.querySelectorAll(".pad button").forEach((b) =>
+    b.addEventListener("click", () => turn(b.dataset.dir)));
+
+  // 화면 스와이프
+  let touch = null;
+  canvas.addEventListener("touchstart", (e) => { touch = e.touches[0]; }, { passive: true });
+  canvas.addEventListener("touchend", (e) => {
+    if (!touch) return;
+    const t = e.changedTouches[0], dx = t.clientX - touch.clientX, dy = t.clientY - touch.clientY;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) > 20)
+      turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up"));
+    touch = null;
+  });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+
+  reset();
+</script>
+</body>
+</html>

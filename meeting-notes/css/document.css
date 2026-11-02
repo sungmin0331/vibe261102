@@ -1,0 +1,173 @@
+/* 회의록 문서 스타일 — 미리보기·HTML 내보내기·클립보드·인쇄 공용. 테마와 관계없이 흰 종이 스타일. */
+.mn-doc {
+  color: #1c1f24;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.mn-doc__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #1c1f24;
+}
+.mn-doc__head h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.3;
+}
+.mn-badge {
+  flex: none;
+  padding: 2px 10px;
+  border: 1px solid #5d6470;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #3b4250;
+}
+.mn-info {
+  width: 100%;
+  margin: 14px 0 4px;
+  border-collapse: collapse;
+}
+.mn-info th,
+.mn-info td {
+  padding: 6px 10px;
+  border: 1px solid #d9dde3;
+  text-align: left;
+  vertical-align: top;
+}
+.mn-info th {
+  width: 80px;
+  background: #f3f4f6;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.mn-section {
+  margin-top: 18px;
+}
+.mn-section h2 {
+  margin: 0 0 6px;
+  padding-left: 8px;
+  border-left: 4px solid #2f5bd3;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.mn-summary {
+  padding: 10px 14px;
+  border: 1px solid #c9d6f5;
+  border-radius: 6px;
+  background: #f3f6fd;
+}
+.mn-summary h2 {
+  border-left: 0;
+  padding-left: 0;
+}
+.mn-section p {
+  margin: 0 0 6px;
+}
+.mn-section ol,
+.mn-section ul {
+  margin: 0 0 6px;
+  padding-left: 22px;
+}
+.mn-checks {
+  list-style: none;
+  padding-left: 4px !important;
+}
+.mn-checks li::before {
+  content: '✔ ';
+  color: #1f7a4d;
+  font-weight: 700;
+}
+.mn-actions {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.mn-actions th,
+.mn-actions td {
+  padding: 6px 8px;
+  border: 1px solid #d9dde3;
+  text-align: left;
+  vertical-align: top;
+}
+.mn-actions thead th {
+  background: #f3f4f6;
+  white-space: nowrap;
+}
+.mn-actions td:first-child {
+  width: 28px;
+  text-align: center;
+}
+.mn-actions td:nth-child(4),
+.mn-actions td:nth-child(5) {
+  white-space: nowrap;
+}
+.mn-memo {
+  margin-top: 2px;
+  color: #5d6470;
+  font-size: 12px;
+}
+.mn-overdue td {
+  background: #fdecee;
+}
+.mn-overdue td:last-child {
+  color: #b42318;
+  font-weight: 700;
+}
+.mn-doc__foot {
+  margin-top: 24px;
+  padding-top: 8px;
+  border-top: 1px solid #d9dde3;
+  font-size: 11px;
+  color: #7a818c;
+}
+
+/* ── 인쇄: 회의록 문서만 A4로 출력 ── */
+@page {
+  size: A4 portrait;
+  margin: 15mm;
+}
+@media print {
+  body {
+    background: #fff !important;
+  }
+  body > *:not(#view-edit),
+  #view-edit > *:not(#workspace),
+  .pane--form,
+  .pane__label {
+    display: none !important;
+  }
+  #view-edit:not([hidden]),
+  #view-edit:not([hidden]) .workspace,
+  #view-edit:not([hidden]) .pane--preview {
+    display: block !important;
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .paper {
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .mn-doc {
+    font-size: 11pt;
+  }
+  .mn-actions tr,
+  .mn-info tr {
+    break-inside: avoid;
+  }
+  .mn-section h2 {
+    break-after: avoid;
+  }
+  .mn-actions thead {
+    display: table-header-group;
+  }
+}

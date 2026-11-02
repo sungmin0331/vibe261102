@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; connect-src 'self' https://script.google.com https://script.googleusercontent.com http://localhost:* http://127.0.0.1:*; media-src 'self' blob:; img-src 'self' data:; style-src 'self' 'unsafe-inline'">
+  <meta name="color-scheme" content="light dark">
+  <title>회의록</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/document.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <div id="banners" class="banners"></div>
+
+  <!-- 회의록 목록 -->
+  <main id="view-list" class="view view--list" hidden>
+    <header class="topbar">
+      <h1 class="topbar__title">회의록</h1>
+      <div class="topbar__actions">
+        <button type="button" class="btn" data-open-settings>⚙ 설정</button>
+        <a href="#/new" class="btn btn--primary">+ 새 회의록</a>
+      </div>
+    </header>
+    <div class="list-tools">
+      <input id="list-search" class="input" type="search" placeholder="🔍 제목·참석자·내용 검색" aria-label="회의록 검색">
+      <select id="list-filter" class="input select" aria-label="목록 필터">
+        <option value="all">전체</option>
+        <option value="failed">동기화 대기·실패</option>
+        <option value="open">미완료 액션 있음</option>
+      </select>
+    </div>
+    <p id="outbox-status" class="outbox-status" hidden>
+      <span id="outbox-text"></span>
+      <button type="button" class="btn btn--small" id="outbox-retry">모두 재시도</button>
+    </p>
+    <div id="meeting-list"></div>
+  </main>
+
+  <!-- 회의록 작성 -->
+  <main id="view-edit" class="view view--edit" hidden>
+    <header class="editbar">
+      <a href="#/list" class="btn btn--ghost editbar__back" aria-label="목록으로">←<span class="hide-sm"> 목록</span></a>
+      <div class="editbar__info">
+        <h1 id="edit-title" class="editbar__title"></h1>
+        <p class="editbar__status">
+          <span id="autosave" class="muted"></span>
+          <span id="sync-badge" class="badge" aria-live="polite"></span>
+          <a id="sheet-link" class="sheet-link" target="_blank" rel="noopener noreferrer" hidden>시트에서 보기 ↗</a>
+        </p>
+      </div>
+      <div class="editbar__actions">
+        <button type="button" class="btn" id="btn-print">🖨<span class="hide-sm"> 인쇄</span></button>
+        <button type="button" class="btn" id="btn-download">⬇<span class="hide-sm"> HTML</span></button>
+        <button type="button" class="btn" id="btn-copy">📋<span class="hide-sm"> 복사</span></button>
+        <button type="button" class="btn btn--icon" data-open-settings aria-label="설정" title="설정">⚙</button>
+        <button type="button" class="btn btn--primary" id="btn-save" title="Ctrl+S">시트에 저장</button>
+      </div>
+    </header>
+
+    <section id="recorder-bar" class="recorder" data-state="idle" aria-label="녹음">
+      <button type="button" class="btn btn--rec" id="rec-start">● 녹음 시작</button>
+      <span id="rec-status" class="recorder__status" hidden>
+        <span id="rec-status-label" class="recorder__label">● 녹음 중</span>
+        <span id="rec-time" class="recorder__time">00:00:00</span>
+        <span id="rec-level" class="recorder__level" aria-hidden="true"><span></span></span>
+      </span>
+      <button type="button" class="btn" id="rec-pause" hidden>❚❚ 일시정지</button>
+      <button type="button" class="btn" id="rec-stop" hidden>■ 중지</button>
+      <span class="recorder__spacer"></span>
+      <button type="button" class="btn" id="speech-toggle" aria-pressed="false">받아쓰기 켜기</button>
+      <button type="button" class="btn btn--ai" id="ai-summarize" hidden>✨ AI 요약</button>
+    </section>
+
+    <div class="tabs" role="tablist" aria-label="화면 전환">
+      <button type="button" role="tab" class="tab" data-tab="form" aria-selected="true">작성</button>
+      <button type="button" role="tab" class="tab" data-tab="transcript" aria-selected="false">받아쓰기</button>
+      <button type="button" role="tab" class="tab" data-tab="preview" aria-selected="false">미리보기</button>
+    </div>
+
+    <div id="workspace" class="workspace" data-tab="form">
+      <div class="pane pane--form">
+        <section id="ai-panel" class="ai-panel" hidden aria-label="AI 요약 초안"></section>
+
+        <section id="transcript" class="transcript transcript--empty" aria-label="받아쓰기">
+          <div class="transcript__head">
+            <h2 class="transcript__title">받아쓰기</h2>
+            <button type="button" class="btn btn--small" id="transcript-to-discussion">논의 내용에 붙여넣기</button>
+            <button type="button" class="btn btn--small btn--ghost" id="transcript-collapse" aria-expanded="true">접기 ▴</button>
+          </div>
+          <div id="transcript-body" class="transcript__body">
+            <p class="transcript__empty muted">녹음하거나 [받아쓰기 켜기]를 누르면 말한 내용이 여기에 기록됩니다.</p>
+            <ol id="transcript-list" class="segments" aria-live="off"></ol>
+            <div id="recordings" class="recordings" hidden></div>
+          </div>
+        </section>
+
+        <form id="meeting-form" class="meeting-form" novalidate></form>
+      </div>
+      <div class="pane pane--preview">
+        <p class="pane__label muted">미리보기</p>
+        <div class="paper"><div id="preview"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="settings-dialog" aria-label="연결 설정"></dialog>
+  <dialog id="confirm-dialog"></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
