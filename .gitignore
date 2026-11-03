@@ -12,3 +12,6 @@ kospi200*.xlsx
 
 # S&P 500 analysis chart output
 sp500_output/
+
+# Birth statistics analysis output
+birth_output/
