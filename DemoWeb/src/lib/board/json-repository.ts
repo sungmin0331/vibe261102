@@ -3,7 +3,20 @@ import path from "node:path";
 
 import type { BoardRepository } from "./repository";
 import { createSeedData, type BoardData } from "./seed";
-import type { PostSummary } from "./types";
+import type { PostSummary, User, UserWithPassword } from "./types";
+
+/** 비밀번호 해시를 뺀 회원 정보만 돌려줍니다. */
+function publicUser(user: UserWithPassword): User {
+  return {
+    id: user.id,
+    username: user.username,
+    displayName: user.displayName,
+    role: user.role,
+    status: user.status,
+    createdAt: user.createdAt,
+    approvedAt: user.approvedAt,
+  };
+}
 
 /**
  * 로컬 JSON 파일 하나에 게시글과 댓글을 저장하는 구현입니다.
@@ -15,7 +28,12 @@ export function createJsonRepository(filePath: string): BoardRepository {
 
   async function load(): Promise<BoardData> {
     try {
-      return JSON.parse(await fs.readFile(filePath, "utf8")) as BoardData;
+      const data = JSON.parse(await fs.readFile(filePath, "utf8")) as BoardData;
+      // 회원 기능 이전에 만든 파일에도 필요한 항목을 채웁니다.
+      data.users ??= [];
+      data.sessions ??= [];
+      data.nextUserId ??= 1;
+      return data;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
       const data = createSeedData();
@@ -81,7 +99,10 @@ export function createJsonRepository(filePath: string): BoardRepository {
     },
 
     getPost(id) {
-      return run((data) => data.posts.find((p) => p.id === id) ?? null);
+      return run((data) => {
+        const post = data.posts.find((p) => p.id === id);
+        return post ? { ...post, authorId: post.authorId ?? null } : null;
+      });
     },
 
     createPost(input) {
@@ -142,8 +163,20 @@ export function createJsonRepository(filePath: string): BoardRepository {
       return run((data) =>
         data.comments
           .filter((c) => c.postId === postId)
-          .sort((a, b) => a.id - b.id),
+          .sort((a, b) => a.id - b.id)
+          .map((c) => ({ ...c, authorId: c.authorId ?? null })),
       );
+    },
+
+    getComment(postId, commentId) {
+      return run((data) => {
+        const comment = data.comments.find(
+          (c) => c.postId === postId && c.id === commentId,
+        );
+        return comment
+          ? { ...comment, authorId: comment.authorId ?? null }
+          : null;
+      });
     },
 
     createComment(postId, input) {
@@ -171,6 +204,110 @@ export function createJsonRepository(filePath: string): BoardRepository {
             (c) => !(c.postId === postId && c.id === commentId),
           );
           return data.comments.length !== before;
+        },
+        { write: true },
+      );
+    },
+
+    createUser(input) {
+      return run(
+        (data) => {
+          if (data.users.some((u) => u.username === input.username)) {
+            return null;
+          }
+          const user: UserWithPassword = {
+            id: data.nextUserId++,
+            ...input,
+            role: "user",
+            status: "pending",
+            createdAt: now(),
+            approvedAt: null,
+          };
+          data.users.push(user);
+          return publicUser(user);
+        },
+        { write: true },
+      );
+    },
+
+    findUserByUsername(username) {
+      return run(
+        (data) => data.users.find((u) => u.username === username) ?? null,
+      );
+    },
+
+    getUser(id) {
+      return run((data) => {
+        const user = data.users.find((u) => u.id === id);
+        return user ? publicUser(user) : null;
+      });
+    },
+
+    listUsers(status) {
+      return run((data) =>
+        data.users
+          .filter((u) => !status || u.status === status)
+          .sort((a, b) => b.id - a.id)
+          .map(publicUser),
+      );
+    },
+
+    countUsers(status) {
+      return run(
+        (data) => data.users.filter((u) => u.status === status).length,
+      );
+    },
+
+    updateUser(id, update) {
+      return run(
+        (data) => {
+          const user = data.users.find((u) => u.id === id);
+          if (!user) return null;
+          if (update.status === "approved" && user.status !== "approved") {
+            user.approvedAt = now();
+          }
+          Object.assign(user, update);
+          if (user.status !== "approved") {
+            // 승인이 취소되면 바로 로그아웃되도록 세션을 지웁니다.
+            data.sessions = data.sessions.filter((s) => s.userId !== id);
+          }
+          return publicUser(user);
+        },
+        { write: true },
+      );
+    },
+
+    createSession(tokenHash, userId, expiresAt) {
+      return run(
+        (data) => {
+          const current = now();
+          data.sessions = data.sessions.filter((s) => s.expiresAt > current);
+          data.sessions.push({
+            tokenHash,
+            userId,
+            expiresAt: expiresAt.toISOString(),
+          });
+        },
+        { write: true },
+      );
+    },
+
+    findSessionUser(tokenHash) {
+      return run((data) => {
+        const session = data.sessions.find(
+          (s) => s.tokenHash === tokenHash && s.expiresAt > now(),
+        );
+        const user = session && data.users.find((u) => u.id === session.userId);
+        return user ? publicUser(user) : null;
+      });
+    },
+
+    deleteSession(tokenHash) {
+      return run(
+        (data) => {
+          data.sessions = data.sessions.filter(
+            (s) => s.tokenHash !== tokenHash,
+          );
         },
         { write: true },
       );

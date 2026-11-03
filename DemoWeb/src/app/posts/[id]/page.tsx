@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { canManage, getCurrentUser } from "@/lib/auth/session";
 import { board } from "@/lib/board";
 import { getPostOrNotFound } from "@/lib/board/params";
 import { formatDateTime } from "@/lib/format";
@@ -36,7 +37,10 @@ export async function generateMetadata({
 export default async function PostPage({ params }: PageProps<"/posts/[id]">) {
   const { id } = await params;
   const post = await getPostOrNotFound(id);
-  const comments = await board.listComments(post.id);
+  const [comments, user] = await Promise.all([
+    board.listComments(post.id),
+    getCurrentUser(),
+  ]);
   const edited = post.updatedAt !== post.createdAt;
 
   return (
@@ -75,15 +79,17 @@ export default async function PostPage({ params }: PageProps<"/posts/[id]">) {
               목록
             </Link>
           </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/posts/${post.id}/edit`}>
-                <PencilIcon data-icon="inline-start" />
-                수정
-              </Link>
-            </Button>
-            <DeletePostButton postId={post.id} />
-          </div>
+          {canManage(user, post.authorId) && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/posts/${post.id}/edit`}>
+                  <PencilIcon data-icon="inline-start" />
+                  수정
+                </Link>
+              </Button>
+              <DeletePostButton postId={post.id} />
+            </div>
+          )}
         </CardFooter>
       </Card>
 
@@ -107,10 +113,12 @@ export default async function PostPage({ params }: PageProps<"/posts/[id]">) {
                       {comment.content}
                     </p>
                   </div>
-                  <DeleteCommentButton
-                    postId={post.id}
-                    commentId={comment.id}
-                  />
+                  {canManage(user, comment.authorId) && (
+                    <DeleteCommentButton
+                      postId={post.id}
+                      commentId={comment.id}
+                    />
+                  )}
                 </li>
               ))}
             </ul>
@@ -120,7 +128,20 @@ export default async function PostPage({ params }: PageProps<"/posts/[id]">) {
             </p>
           )}
           <Separator />
-          <CommentForm postId={post.id} />
+          {user ? (
+            <CommentForm postId={post.id} authorName={user.displayName} />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              댓글을 쓰려면{" "}
+              <Link
+                href={`/login?next=/posts/${post.id}`}
+                className="text-foreground underline"
+              >
+                로그인
+              </Link>
+              하세요.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

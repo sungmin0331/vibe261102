@@ -2,11 +2,16 @@ import type {
   Comment,
   CommentInput,
   ListPostsParams,
+  NewUser,
   Paginated,
   Post,
   PostInput,
   PostSummary,
   PostUpdate,
+  User,
+  UserStatus,
+  UserUpdate,
+  UserWithPassword,
 } from "./types";
 
 /**
@@ -23,6 +28,25 @@ export interface BoardRepository {
   incrementViews(id: number): Promise<number | null>;
 
   listComments(postId: number): Promise<Comment[]>;
+  getComment(postId: number, commentId: number): Promise<Comment | null>;
   createComment(postId: number, input: CommentInput): Promise<Comment | null>;
   deleteComment(postId: number, commentId: number): Promise<boolean>;
+
+  /** 새 회원을 pending 상태로 만듭니다. 아이디가 이미 있으면 null. */
+  createUser(input: NewUser): Promise<User | null>;
+  findUserByUsername(username: string): Promise<UserWithPassword | null>;
+  getUser(id: number): Promise<User | null>;
+  /** 최근 가입 순. status를 주면 그 상태만 돌려줍니다. */
+  listUsers(status?: UserStatus): Promise<User[]>;
+  countUsers(status: UserStatus): Promise<number>;
+  updateUser(id: number, update: UserUpdate): Promise<User | null>;
+
+  createSession(
+    tokenHash: string,
+    userId: number,
+    expiresAt: Date,
+  ): Promise<void>;
+  /** 만료되지 않은 세션의 회원을 돌려줍니다. */
+  findSessionUser(tokenHash: string): Promise<User | null>;
+  deleteSession(tokenHash: string): Promise<void>;
 }

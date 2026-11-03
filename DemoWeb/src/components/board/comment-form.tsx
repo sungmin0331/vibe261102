@@ -5,11 +5,16 @@ import { toast } from "sonner";
 
 import { createCommentAction, type CommentFormState } from "@/app/actions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-export function CommentForm({ postId }: { postId: number }) {
+export function CommentForm({
+  postId,
+  authorName,
+}: {
+  postId: number;
+  authorName: string;
+}) {
   const [state, formAction, pending] = useActionState<
     CommentFormState,
     FormData
@@ -25,25 +30,8 @@ export function CommentForm({ postId }: { postId: number }) {
   return (
     <form action={formAction} className="flex flex-col gap-3" noValidate>
       <div className="grid gap-2">
-        <Label htmlFor="comment-author" className="sr-only">
-          작성자
-        </Label>
-        <Input
-          id="comment-author"
-          name="author"
-          maxLength={20}
-          placeholder="이름"
-          defaultValue={values.author}
-          aria-invalid={!!errors.author}
-          className="sm:max-w-xs"
-        />
-        {errors.author && (
-          <p className="text-sm text-destructive">{errors.author}</p>
-        )}
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="comment-content" className="sr-only">
-          댓글
+        <Label htmlFor="comment-content" className="text-muted-foreground">
+          {authorName} 님으로 댓글 작성
         </Label>
         <Textarea
           id="comment-content"

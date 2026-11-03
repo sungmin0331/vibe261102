@@ -1,10 +1,20 @@
-import type { Comment, Post } from "./types";
+import type { Comment, Post, UserWithPassword } from "./types";
+
+/** JSON 저장소에서 쓰는 세션 기록. 토큰 원문 대신 해시만 저장합니다. */
+export interface StoredSession {
+  tokenHash: string;
+  userId: number;
+  expiresAt: string;
+}
 
 export interface BoardData {
   posts: Post[];
   comments: Comment[];
   nextPostId: number;
   nextCommentId: number;
+  users: UserWithPassword[];
+  sessions: StoredSession[];
+  nextUserId: number;
 }
 
 const samples: Array<Pick<Post, "title" | "author" | "content">> = [
@@ -185,6 +195,7 @@ export function createSeedData(now = new Date()): BoardData {
       ...sample,
       createdAt,
       updatedAt: createdAt,
+      authorId: null,
       views: ((index * 37) % 120) + 5,
     };
   });
@@ -195,6 +206,7 @@ export function createSeedData(now = new Date()): BoardData {
       id: index + 1,
       postId: post.id,
       author: comment.author,
+      authorId: null,
       content: comment.content,
       createdAt: new Date(
         new Date(post.createdAt).getTime() + (index + 1) * 45 * 60 * 1000,
@@ -207,5 +219,8 @@ export function createSeedData(now = new Date()): BoardData {
     comments,
     nextPostId: posts.length + 1,
     nextCommentId: comments.length + 1,
+    users: [],
+    sessions: [],
+    nextUserId: 1,
   };
 }

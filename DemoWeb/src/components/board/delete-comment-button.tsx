@@ -31,7 +31,7 @@ export function DeleteCommentButton({
     startTransition(async () => {
       const deleted = await deleteCommentAction(postId, commentId);
       if (deleted) toast.success("댓글을 삭제했습니다.");
-      else toast.error("이미 삭제된 댓글입니다.");
+      else toast.error("삭제할 수 없는 댓글입니다.");
     });
   }
 

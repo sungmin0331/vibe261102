@@ -4,6 +4,9 @@ Next.js(App Router) + TypeScript + shadcn/ui로 만든 웹 게시판 데모입�
 
 ## 기능
 
+- 회원가입(아이디·이름·비밀번호)과 로그인/로그아웃
+- 관리자 회원 관리(`/admin`): 가입 승인·거절, 승인 취소, 관리자 지정·해제
+- 글·댓글 작성은 승인된 회원만, 수정·삭제는 작성자 본인이나 관리자만 가능 (읽기는 누구나)
 - 게시글 목록: 번호·제목(댓글 수)·작성자·작성일·조회수, 10개씩 페이지네이션
 - 검색: 제목+내용 / 제목 / 내용 (검색 조건은 URL에 남아 새로고침·공유해도 유지)
 - 게시글 상세(열 때 조회수 증가), 작성, 수정, 삭제(확인 다이얼로그)
@@ -40,17 +43,30 @@ npm run start
 npm run lint
 ```
 
+## 회원과 관리자
+
+1. `/signup`에서 가입 신청하면 `승인 대기` 상태가 되고, 관리자가 승인해야 로그인할 수 있습니다.
+2. 관리자는 오른쪽 위 계정 메뉴 → `회원 관리`(`/admin`)에서 신청을 승인·거절하고, 다른 회원을 관리자로 지정할 수 있습니다. 승인 대기 중인 신청이 있으면 계정 메뉴에 빨간 점이 표시됩니다.
+3. 첫 관리자는 가입 신청 후 명령으로 지정합니다. (`.env.local`의 DB에 적용됩니다)
+
+```bash
+npm run set-admin -- <아이디>
+```
+
+- 비밀번호는 scrypt로 해시해 저장하고, 로그인 세션은 httpOnly 쿠키(30일)와 DB의 세션 기록(토큰 해시)으로 관리합니다.
+- 회원 기능 이전에 쓴 글(샘플 글 등)은 작성 회원 정보가 없어 관리자만 수정·삭제할 수 있습니다.
+
 ## 데이터 저장
 
 ### Neon(PostgreSQL) — 기본
 
 - `.env.local`의 `DATABASE_URL`에 Neon 연결 문자열을 넣으면 Neon에 저장합니다. (`.env.local`은 커밋되지 않습니다)
-- 서버가 처음 DB를 쓸 때 `board_posts`, `board_comments` 테이블을 만들고(`CREATE TABLE IF NOT EXISTS`), 게시글이 하나도 없으면 샘플 데이터를 넣습니다. 따로 마이그레이션을 실행할 필요가 없습니다.
+- 서버가 처음 DB를 쓸 때 `board_posts`, `board_comments`, `board_users`, `board_sessions` 테이블을 만들고(`CREATE TABLE IF NOT EXISTS`), 게시글이 하나도 없으면 샘플 데이터를 넣습니다. 따로 마이그레이션을 실행할 필요가 없습니다.
 - 댓글은 게시글이 삭제되면 함께 삭제됩니다(`ON DELETE CASCADE`).
-- 처음 상태로 되돌리려면 두 테이블을 지운 뒤 서버를 다시 시작하세요.
+- 처음 상태로 되돌리려면 테이블을 지운 뒤 서버를 다시 시작하세요.
 
 ```sql
-DROP TABLE board_comments, board_posts;
+DROP TABLE board_sessions, board_comments, board_posts, board_users;
 ```
 
 - 배포할 때는 호스팅 서비스의 환경 변수에 `DATABASE_URL`을 설정합니다.
@@ -70,10 +86,14 @@ src/
     posts/new/page.tsx       글쓰기
     posts/[id]/page.tsx      상세 + 댓글
     posts/[id]/edit/page.tsx 수정
+    signup/, login/          회원가입, 로그인
+    admin/page.tsx           회원 관리(관리자 전용)
     actions.ts               서버 액션(작성·수정·삭제·댓글·조회수)
+    auth-actions.ts          서버 액션(가입·로그인·로그아웃·회원 관리)
   components/
     board/                   게시판 화면 컴포넌트
     ui/                      shadcn/ui 컴포넌트
+  lib/auth/                  비밀번호 해시, 세션, 권한 확인
   lib/board/
     types.ts                 Post, Comment 등 타입
     repository.ts            BoardRepository 인터페이스
@@ -89,6 +109,5 @@ src/
 
 ## 참고
 
-- 로그인 기능이 없는 데모이므로 누구나 글과 댓글을 수정·삭제할 수 있습니다.
 - JSON 파일 저장소는 한 서버 프로세스 안에서 요청을 순서대로 처리하므로 여러 인스턴스로 띄울 때는 Neon을 사용하세요.
 - Next.js 16의 Cache Components가 켜져 있어 정적 셸을 먼저 보내고 게시판 데이터는 요청 시점에 스트리밍됩니다.
