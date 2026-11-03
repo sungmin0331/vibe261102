@@ -12,6 +12,7 @@ stock.naver.com/market/stock/kr 페이지는 Next.js로 만들어져 시세를 �
 
 import argparse
 import csv
+import sys
 import time
 
 import requests
@@ -157,4 +158,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        # exe를 더블클릭해서 실행하면 끝나자마자 창이 닫히므로 결과를 볼 수 있게 대기
+        if getattr(sys, "frozen", False):
+            input("\nEnter 키를 누르면 종료합니다...")
