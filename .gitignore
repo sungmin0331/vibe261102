@@ -3,3 +3,9 @@ build/
 dist/
 *.spec
 __pycache__/
+
+# Crawler output files
+naver_news.csv
+naver_news.xlsx
+kospi200*.csv
+kospi200*.xlsx
