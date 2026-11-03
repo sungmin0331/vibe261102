@@ -1,0 +1,65 @@
+{
+  "name": "Lim Sungmin",
+  "role": "Python & HTML5 Developer",
+  "tagline": "데이터를 다루는 Python 백엔드와 표준을 지키는 HTML5 웹을 만듭니다.",
+  "email": "smlim@infiniq.co.kr",
+  "location": "Seoul, Korea",
+  "about": [
+    "Python으로 자동화 도구, 데이터 처리 파이프라인, 웹 백엔드를 개발하고 HTML5·CSS3·JavaScript로 가볍고 접근성 좋은 웹 화면을 만듭니다.",
+    "읽기 쉬운 코드, 작은 단위의 테스트, 문서로 남기는 습관을 중요하게 생각합니다. 반복되는 일을 찾아 자동화하는 데서 가장 큰 보람을 느낍니다."
+  ],
+  "interests": ["업무 자동화", "데이터 파이프라인", "웹 접근성", "정적 사이트"],
+  "skills": [
+    {
+      "category": "주력",
+      "primary": true,
+      "items": ["Python", "HTML5"]
+    },
+    {
+      "category": "웹",
+      "items": ["CSS3", "JavaScript", "반응형 웹", "웹 접근성"]
+    },
+    {
+      "category": "Python 생태계",
+      "items": ["Flask", "FastAPI", "pandas", "pytest"]
+    },
+    {
+      "category": "도구",
+      "items": ["Git", "GitHub", "VS Code", "Linux"]
+    }
+  ],
+  "projects": [
+    {
+      "title": "DemoPort",
+      "description": "지금 보고 있는 개발자 프로필 사이트입니다. profile.json을 Python 빌드 스크립트로 정적 HTML5 페이지로 만듭니다.",
+      "tags": ["Python", "HTML5", "CSS3"],
+      "github": "",
+      "demo": ""
+    },
+    {
+      "title": "샘플 프로젝트: 업무 자동화 도구",
+      "description": "엑셀 보고서 취합과 메일 발송을 자동화한 Python 스크립트입니다. 실제 프로젝트로 바꿔 주세요.",
+      "tags": ["Python", "pandas"],
+      "github": "",
+      "demo": ""
+    },
+    {
+      "title": "샘플 프로젝트: 사내 대시보드",
+      "description": "Flask API와 HTML5 화면으로 만든 간단한 현황 대시보드입니다. 실제 프로젝트로 바꿔 주세요.",
+      "tags": ["Flask", "HTML5", "JavaScript"],
+      "github": "",
+      "demo": ""
+    }
+  ],
+  "experience": [
+    {
+      "period": "20XX – 현재",
+      "title": "개발자",
+      "org": "Infiniq",
+      "description": "담당 업무를 입력해 주세요."
+    }
+  ],
+  "links": [
+    { "label": "GitHub", "url": "" }
+  ]
+}

@@ -6,6 +6,18 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "5173", "--directory", "todolist"],
       "port": 5173
+    },
+    {
+      "name": "meeting-notes",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["meeting-notes/dev/dev-server.mjs", "5174"],
+      "port": 5174
+    },
+    {
+      "name": "demoport",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5175", "--directory", "DemoPort"],
+      "port": 5175
     }
   ]
 }
