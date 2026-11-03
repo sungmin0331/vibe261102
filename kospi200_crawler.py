@@ -79,8 +79,11 @@ def fetch_daily(days):
     return rows[:days]
 
 
-def fetch_stocks():
-    """코스피200 편입 종목 전체를 페이지를 넘겨가며 시가총액 순으로 가져온다."""
+def fetch_stocks(on_page=None):
+    """코스피200 편입 종목 전체를 페이지를 넘겨가며 시가총액 순으로 가져온다.
+
+    on_page(page, 이번 페이지 건수, 누적 건수)가 주어지면 페이지마다 호출한다.
+    """
     rows = []
     seen = set()
     page = 1
@@ -111,7 +114,8 @@ def fetch_stocks():
                 "거래대금(백만)": d["accumulatedTradingValue"],
                 "시가총액(억)": d["marketValue"],
             })
-        print(f"  {page}페이지: {len(items)}건 (누적 {len(rows)}건)")
+        if on_page:
+            on_page(page, len(items), len(rows))
         if len(items) < PAGE_SIZE:
             break
         page += 1
@@ -150,7 +154,9 @@ def main():
         print(f"  {row['날짜']}  {row['종가']:>8}  {row['전일대비']:>7}  {row['등락률(%)']:>6}%")
 
     print("\n편입 종목 수집 중...")
-    stocks = fetch_stocks()
+    stocks = fetch_stocks(
+        lambda page, count, total: print(f"  {page}페이지: {count}건 (누적 {total}건)")
+    )
     save_csv(args.stocks_out, stocks)
     print(f"편입 종목 {len(stocks)}건을 {args.stocks_out}에 저장했습니다.")
     for row in stocks[:5]:
