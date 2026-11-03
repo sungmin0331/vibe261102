@@ -1,6 +1,12 @@
 "use client";
 
-import { LogOutIcon, ShieldCheckIcon, UserIcon } from "lucide-react";
+import {
+  FileTextIcon,
+  LogOutIcon,
+  SettingsIcon,
+  ShieldCheckIcon,
+  UserIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useTransition } from "react";
 
@@ -52,6 +58,11 @@ export function AccountMenu({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/account">
+            <SettingsIcon />내 정보
+          </Link>
+        </DropdownMenuItem>
         {isAdmin && (
           <DropdownMenuItem asChild>
             <Link href="/admin">
@@ -65,6 +76,15 @@ export function AccountMenu({
             </Link>
           </DropdownMenuItem>
         )}
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin/posts">
+              <FileTextIcon />
+              게시글 관리
+            </Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           disabled={pending}
           onSelect={() => startTransition(() => logoutAction())}

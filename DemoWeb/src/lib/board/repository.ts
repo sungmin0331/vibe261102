@@ -24,6 +24,8 @@ export interface BoardRepository {
   createPost(input: PostInput): Promise<Post>;
   updatePost(id: number, input: PostUpdate): Promise<Post | null>;
   deletePost(id: number): Promise<boolean>;
+  /** 여러 글을 한 번에 지우고 실제로 지운 개수를 돌려줍니다. */
+  deletePosts(ids: number[]): Promise<number>;
   /** 조회수를 1 올리고 새 조회수를 돌려줍니다. 글이 없으면 null. */
   incrementViews(id: number): Promise<number | null>;
 
@@ -40,6 +42,10 @@ export interface BoardRepository {
   listUsers(status?: UserStatus): Promise<User[]>;
   countUsers(status: UserStatus): Promise<number>;
   updateUser(id: number, update: UserUpdate): Promise<User | null>;
+  /** 이름을 바꾸고, 그 회원이 쓴 글·댓글의 작성자 이름도 함께 바꿉니다. */
+  updateDisplayName(id: number, displayName: string): Promise<User | null>;
+  /** 비밀번호를 바꾸고 그 회원의 모든 세션을 지웁니다. 회원이 없으면 false. */
+  updatePassword(id: number, passwordHash: string): Promise<boolean>;
 
   createSession(
     tokenHash: string,

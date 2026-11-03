@@ -14,13 +14,16 @@ const fieldOptions: Array<{ value: SearchField; label: string }> = [
 export function SearchForm({
   query,
   field,
+  action = "/",
 }: {
   query: string;
   field: SearchField;
+  /** 검색 결과를 보여 줄 주소 */
+  action?: string;
 }) {
   return (
     <form
-      action="/"
+      action={action}
       role="search"
       className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"
     >

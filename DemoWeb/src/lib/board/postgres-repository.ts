@@ -215,6 +215,14 @@ export function createPostgresRepository(
       return rows.length > 0;
     },
 
+    async deletePosts(ids) {
+      if (ids.length === 0) return 0;
+      const sql = await db();
+      const rows = await sql`
+        DELETE FROM board_posts WHERE id = ANY(${ids}::int[]) RETURNING id`;
+      return rows.length;
+    },
+
     async incrementViews(id) {
       const sql = await db();
       const [row] = await sql`
@@ -325,6 +333,30 @@ export function createPostgresRepository(
         await sql`DELETE FROM board_sessions WHERE user_id = ${id}`;
       }
       return user;
+    },
+
+    async updateDisplayName(id, displayName) {
+      const sql = await db();
+      const [rows] = await sql.transaction([
+        sql.query(
+          `UPDATE board_users SET display_name = $2 WHERE id = $1
+           RETURNING ${USER_COLUMNS}`,
+          [id, displayName],
+        ),
+        sql`UPDATE board_posts SET author = ${displayName} WHERE author_id = ${id}`,
+        sql`UPDATE board_comments SET author = ${displayName} WHERE author_id = ${id}`,
+      ]);
+      return rows[0] ? toUser(rows[0]) : null;
+    },
+
+    async updatePassword(id, passwordHash) {
+      const sql = await db();
+      const [rows] = await sql.transaction([
+        sql`UPDATE board_users SET password_hash = ${passwordHash}
+             WHERE id = ${id} RETURNING id`,
+        sql`DELETE FROM board_sessions WHERE user_id = ${id}`,
+      ]);
+      return rows.length > 0;
     },
 
     async createSession(tokenHash, userId, expiresAt) {

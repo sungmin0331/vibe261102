@@ -147,6 +147,19 @@ export function createJsonRepository(filePath: string): BoardRepository {
       );
     },
 
+    deletePosts(ids) {
+      return run(
+        (data) => {
+          const targets = new Set(ids);
+          const before = data.posts.length;
+          data.posts = data.posts.filter((p) => !targets.has(p.id));
+          data.comments = data.comments.filter((c) => !targets.has(c.postId));
+          return before - data.posts.length;
+        },
+        { write: true },
+      );
+    },
+
     incrementViews(id) {
       return run(
         (data) => {
@@ -272,6 +285,34 @@ export function createJsonRepository(filePath: string): BoardRepository {
             data.sessions = data.sessions.filter((s) => s.userId !== id);
           }
           return publicUser(user);
+        },
+        { write: true },
+      );
+    },
+
+    updateDisplayName(id, displayName) {
+      return run(
+        (data) => {
+          const user = data.users.find((u) => u.id === id);
+          if (!user) return null;
+          user.displayName = displayName;
+          for (const item of [...data.posts, ...data.comments]) {
+            if (item.authorId === id) item.author = displayName;
+          }
+          return publicUser(user);
+        },
+        { write: true },
+      );
+    },
+
+    updatePassword(id, passwordHash) {
+      return run(
+        (data) => {
+          const user = data.users.find((u) => u.id === id);
+          if (!user) return false;
+          user.passwordHash = passwordHash;
+          data.sessions = data.sessions.filter((s) => s.userId !== id);
+          return true;
         },
         { write: true },
       );

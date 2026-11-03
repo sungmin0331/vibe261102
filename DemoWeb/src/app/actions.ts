@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { canManage, getCurrentUser } from "@/lib/auth/session";
+import { canManage, getCurrentUser, isAdmin } from "@/lib/auth/session";
 import { board } from "@/lib/board";
 import { check, field, hasErrors, type FormState } from "@/lib/form";
 
@@ -67,6 +67,17 @@ export async function deletePostAction(postId: number) {
   }
   revalidatePath("/");
   redirect("/");
+}
+
+/** 관리자 전용: 게시글 관리 화면에서 고른 글들을 지웁니다. */
+export async function deletePostsAction(postIds: number[]) {
+  const user = await getCurrentUser();
+  if (!isAdmin(user)) {
+    return { ok: false as const, message: "관리자만 할 수 있습니다." };
+  }
+  const count = await board.deletePosts(postIds);
+  revalidatePath("/", "layout");
+  return { ok: true as const, count };
 }
 
 export async function recordViewAction(postId: number) {

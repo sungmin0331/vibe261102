@@ -26,11 +26,13 @@ export function BoardPagination({
   page,
   totalPages,
   searchParams,
+  basePath = "/",
 }: {
   page: number;
   totalPages: number;
   /** 페이지를 옮겨도 유지할 검색 조건 */
   searchParams: Record<string, string>;
+  basePath?: string;
 }) {
   if (totalPages <= 1) return null;
 
@@ -38,7 +40,7 @@ export function BoardPagination({
     const params = new URLSearchParams(searchParams);
     if (target > 1) params.set("page", String(target));
     const query = params.toString();
-    return query ? `/?${query}` : "/";
+    return query ? `${basePath}?${query}` : basePath;
   };
 
   return (
