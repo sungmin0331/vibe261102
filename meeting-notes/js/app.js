@@ -84,7 +84,7 @@ const renderPreview = debounce(() => {
   const m = current();
   if (!m) return;
   const badge = syncBadge(m.sync, { configured: configured() });
-  $('preview').replaceChildren(renderDocument(m, { footerNote: `시트 동기화: ${badge.label.replace(/^\S+\s/, '')}` }));
+  $('preview').replaceChildren(renderDocument(m, { footerNote: `시트 동기화: ${badge.label.replace(/^[^\p{L}\p{N}]+/u, '')}` }));
 }, 150);
 
 function renderStatus() {

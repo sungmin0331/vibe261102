@@ -71,7 +71,7 @@ export function renderAiReview(panel, m, { busy = false, error = '' } = {}) {
   };
   const empty = !d.summary && !d.discussion && !d.agenda.length && !d.decisions.length && !d.actionItems.length;
 
-  panel.replaceChildren(
+  const children = [
     h(
       'div',
       { class: 'ai-panel__head' },
@@ -136,7 +136,8 @@ export function renderAiReview(panel, m, { busy = false, error = '' } = {}) {
           h('button', { type: 'button', class: 'btn', 'data-ai-action': 'close', text: '취소' }),
           h('button', { type: 'button', class: 'btn btn--primary', 'data-ai-action': 'apply', text: '선택 항목 적용' }),
         ),
-  );
+  ];
+  panel.replaceChildren(...children.filter(Boolean));
 }
 
 export function readSelection(panel) {

@@ -710,7 +710,8 @@ interface RecordingRef {
 interface TranscriptSegment {
   id: string;
   recordingId: string | null;   // 녹음 없이 받아쓰기만 한 경우 null
-  offsetSec: number;            // 회의(녹음) 시작 기준 경과 초
+  offsetSec: number | null;     // 녹음 시작 기준 경과 초 (녹음 없이 받아쓰면 null)
+  at: string;                   // 인식 시각 ISO 8601 — 화면·AI 입력에는 이 시각을 표시
   speaker: string | null;       // 수동 지정 (P2)
   text: string;
   engine: 'webspeech' | 'server'; // 실시간 / 파일 변환(P2)
@@ -956,9 +957,13 @@ meeting-notes/
     ├── Code.gs             # doPost 라우터, 토큰 검증, upsert, 락, 로그
     ├── Sheets.gs           # 시트/헤더 생성(setup), 헤더 이름 기반 열 매핑
     ├── Ai.gs               # summarize: Claude API 호출, 프롬프트·JSON 스키마, 한도·사용량 기록
-    ├── Stt.gs              # transcribe (P2): STT 서비스 프록시
+    ├── Stt.gs              # transcribe (P2): STT 서비스 프록시 (미구현)
     ├── appsscript.json     # 매니페스트 (V8, 최소 OAuth 범위, 웹앱 설정)
     └── README.md           # 설치·배포·토큰 설정·토큰 교체 가이드
+dev/                        # (구현 시 추가) 개발용 — 배포 대상 아님
+    ├── gas-emulator.mjs    # Node에서 .gs를 실행하는 최소 Apps Script 에뮬레이터
+    ├── dev-server.mjs      # 정적 파일 + /mock/exec 엔드포인트 (가짜 AI 요약)
+    └── test-apps-script.mjs# 백엔드 스모크 테스트
 ```
 
 ### 9.3 아키텍처 흐름도

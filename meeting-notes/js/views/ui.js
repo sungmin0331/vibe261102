@@ -8,10 +8,8 @@ export function showToast(message, { actionLabel = '', onAction = null, duration
   const toast = $('toast');
   clearTimeout(toastTimer);
   toastAction = onAction;
-  toast.replaceChildren(
-    h('span', { text: message }),
-    actionLabel ? h('button', { type: 'button', class: 'btn btn--link', 'data-toast-action': '', text: actionLabel }) : null,
-  );
+  toast.replaceChildren(h('span', { text: message }));
+  if (actionLabel) toast.append(h('button', { type: 'button', class: 'btn btn--link', 'data-toast-action': '', text: actionLabel }));
   toast.hidden = false;
   toastTimer = setTimeout(() => {
     hideToast();
@@ -112,11 +110,14 @@ export function confirmDialog({
   });
 
   return new Promise((resolve) => {
-    dialog.addEventListener(
-      'close',
-      () => resolve({ value: dialog.returnValue || 'cancel', option: Boolean(optionBox?.checked) }),
-      { once: true },
-    );
+    // 버튼 선택은 submit에서 바로 받고, Esc로 닫는 경우만 close 이벤트로 받는다
+    const listeners = new AbortController();
+    const finish = (value) => {
+      listeners.abort();
+      resolve({ value, option: Boolean(optionBox?.checked) });
+    };
+    dialog.firstElementChild.addEventListener('submit', (e) => finish(e.submitter?.value || 'cancel'), { signal: listeners.signal });
+    dialog.addEventListener('close', () => finish(dialog.returnValue || 'cancel'), { signal: listeners.signal });
     dialog.returnValue = '';
     dialog.showModal();
     (requireBox ?? confirmBtn).focus();

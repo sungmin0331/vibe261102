@@ -4,6 +4,11 @@ export const $ = (id) => document.getElementById(id);
 const BOOLEAN_PROPS = new Set(['checked', 'selected', 'hidden', 'disabled', 'required', 'open']);
 
 export function h(tag, props = {}, ...children) {
+  // 속성 없이 자식부터 넘긴 경우: h('tr', h('td'), ...)
+  if (props == null || props instanceof Node || Array.isArray(props) || typeof props !== 'object') {
+    children.unshift(props);
+    props = {};
+  }
   const el = document.createElement(tag);
   let value;
   for (const [key, v] of Object.entries(props)) {

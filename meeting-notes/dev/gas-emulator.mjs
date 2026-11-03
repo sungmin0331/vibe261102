@@ -154,7 +154,7 @@ export function createEmulator({ scriptDir, properties = {}, fetchHandler = null
       const out = context.doPost({ postData: { contents: typeof body === 'string' ? body : JSON.stringify(body) } });
       return JSON.parse(out.getContent());
     },
-    run: (fn) => context[fn](),
+    call: (fn, ...args) => context[fn](...args),
     sheet: (name) => sheets.get(name),
     props,
     cache,
