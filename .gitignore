@@ -9,3 +9,6 @@ naver_news.csv
 naver_news.xlsx
 kospi200*.csv
 kospi200*.xlsx
+
+# S&P 500 analysis chart output
+sp500_output/
