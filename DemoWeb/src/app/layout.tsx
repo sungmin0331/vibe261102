@@ -31,7 +31,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      {/* 브라우저 확장 프로그램(예: ColorZilla의 cz-shortcut-listen)이 body에
+          속성을 덧붙여 생기는 hydration 경고를 무시합니다. 자식 요소에는 적용되지 않습니다. */}
+      <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
