@@ -769,7 +769,9 @@ class MainWindow(QMainWindow):
 
 
 def find_default_csv():
-    for folder in (os.getcwd(), os.path.dirname(os.path.abspath(__file__))):
+    # exe로 실행하면 __file__은 임시 폴더를 가리키므로 exe가 있는 폴더도 찾아본다
+    app_dir = os.path.dirname(sys.executable if getattr(sys, "frozen", False) else os.path.abspath(__file__))
+    for folder in (os.getcwd(), app_dir):
         path = os.path.join(folder, DEFAULT_CSV)
         if os.path.exists(path):
             return path
